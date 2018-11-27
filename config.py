@@ -4,7 +4,7 @@ import redis
 class Config(object):
     SECRET_KEY = "1238sadfhaksdhf"
 
-    DEBUG = True
+    # DEBUG = True
     SQLALCHEMY_DATABASE_URI = "mysql://root:1234@127.0.0.1:3306/manage_demo"
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     REDIS_HOST = "127.0.0.1"
@@ -15,3 +15,15 @@ class Config(object):
     SESSION_USE_SIGNER = True  # 让 cookie 中的 session_id 被加密签名处理
     SESSION_REDIS = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT)  # 使用 redis 的实例
     PERMANENT_SESSION_LIFETIME = 86400  # session 的有效期，单位是秒
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+
+class ProductionConfig(Config):
+    pass
+
+
+config_dict = {"development": DevelopmentConfig,
+               "production": ProductionConfig}
