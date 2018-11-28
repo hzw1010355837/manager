@@ -1,4 +1,5 @@
 import redis
+import logging
 
 
 class Config(object):
@@ -18,11 +19,12 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
-    DEBUG = True
+    # DEBUG = True
+    LOG_LEVEL = logging.DEBUG
 
 
 class ProductionConfig(Config):
-    pass
+    LOG_LEVEL = logging.ERROR
 
 
 config_dict = {"development": DevelopmentConfig,
