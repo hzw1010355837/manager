@@ -147,8 +147,33 @@ $(function () {
             $("#register-password-err").show();
             return;
         }
-
+        var params = {
+            "mobile":mobile,
+            "sms_code":smscode,
+            "password":password
+        }
         // 发起注册请求
+        $.ajax({
+            url:"/passport/register",
+            type:"post",
+            data:JSON.stringify(params),
+            dataType: "json",
+            contentType: "application/json",
+            headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
+            success:function (resp) {
+                if(resp.errno == "0"){window.location.reload()}
+                else {
+                    // 错误展示
+                    $("#register-password-err").html(resp.errmsg)
+                    $("#register-password-err").show()
+                }
+
+            }
+
+        })
+
 
     })
 })

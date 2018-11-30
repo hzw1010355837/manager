@@ -1,10 +1,12 @@
+from datetime import datetime
 from info.lib.yuntongxun.sms import CCP
 from info.models import User
 from info.utils.response_code import RET
 from . import passport_bp
-from flask import request, current_app, abort, make_response, jsonify
+from flask import request, current_app, abort, make_response, jsonify, session
 from info.utils.captcha.captcha import captcha
-from info import redis_store,constants
+from info import redis_store, constants, db
+import re
 
 
 # 127.0.0.1:5000/passport/image_code?code_id=UUID
@@ -58,9 +60,8 @@ def send_smscode():
     # 2校验参数
     if not all([mobile, image_code, image_code_id]):
         current_app.logger.error("参数错误")
-        # return jsonify({"errno": RET.PARAMERR, "errmsg": "参数错误"})
         return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
-    import re
+        # return jsonify({"errno": RET.PARAMERR, "errmsg": "参数错误"})
     # print(1)
     if not re.match(r"1[3578][0-9]{9}", mobile):
         current_app.logger.error("手机号格式错误")
@@ -120,4 +121,105 @@ def send_smscode():
         return jsonify(errno=RET.DBERR, errmsg="保存短信验证码异常")
     # finally
     return jsonify(errno=RET.OK, errmsg="发送短信验证码成功")
-    return response
+
+
+@passport_bp.route("/register", methods=["POST"])
+def register():
+    """
+    1,获取参数
+    2,校验参数
+    3,逻辑处理
+    4,返回值
+    :return:
+    """
+    # 1,获取参数,手机号,短信验证码,密码
+    json_data = request.json
+    mobile = json_data.get("mobile")
+    sms_code = json_data.get("sms_code")
+    password = json_data.get("password")
+    # 2,校验参数
+    if not all([mobile, sms_code, password]):
+        current_app.logger.error("参数不足")
+        return jsonify(errno=RET.NODATA, errmsg="参数不足")
+    if not re.match(r"1[3578][0-9]{9}", mobile):
+        current_app.logger.error("手机号格式错误")
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号格式错误")
+    # TODO:为什么不需要进行下面的步骤
+    """
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if user:
+        current_app.logger.error("用户已存在")
+        return jsonify(errno=RET.NODATA, errmsg="用户已存在")
+    """
+    try:
+        real_sms_code = redis_store.get("SMS_%s" % mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if not real_sms_code:
+        current_app.logger.error("验证码过期")
+        return jsonify(errno=RET.NODATA, errmsg="验证码过期")
+    redis_store.delete("SMS_%s" % mobile)
+    if real_sms_code != sms_code:
+        current_app.logger.error("验证码错误")
+        return jsonify(errno=RET.PARAMERR, errmsg="验证码错误")
+    # 创建用户对象,并给对应属性赋值
+    user = User()
+    user.nick_name = mobile
+    user.mobile = mobile
+    user.last_login = datetime.now()
+    # TODO:密码未加密
+    user.password = password
+    # 向mysql添加用户
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="保存用户对象异常")
+
+    # 使用session保存用户信息 ---->redis
+    session["user_id"] = user.id
+    session["mobile"] = mobile
+    session["nick_name"] = mobile
+    # 4返回值
+    print(1)
+    return jsonify(errno=RET.OK, errmsg="注册成功")
+
+
+@passport_bp.route("/login", methods=["POST"])
+def login():
+    """
+    1,获取参数:手机号mobile,可视密码password
+    2,校验参数:手机号是否为空,手机号与数据库中手机号是否一致
+    3,逻辑处理:密码处理
+    4,返回值
+    :return:
+    """
+    # 1,获取参数:手机号mobile,可视密码password
+    json_data = request.json
+    mobile = json_data.get("mobile")
+    password = json_data.get("password")
+    # 2,校验参数:手机号是否为空,手机号与数据库中手机号是否一致
+    if not all([mobile, password]):
+        current_app.logger.error("手机号不能为空")
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号不能为空")
+
+    # if User.mobile != mobile:
+    #     current_app.logger.error("参数错误")
+    #     return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
+    # 3,逻辑处理:密码处理
+    if not user.check_passowrd(password):
+        return jsonify(errno=RET.PWDERR, errmsg="密码错误")
