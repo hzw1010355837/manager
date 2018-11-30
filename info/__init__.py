@@ -7,6 +7,7 @@ from redis import StrictRedis
 from config import config_dict
 from flask_session import Session
 import logging
+from info.utils.common import set_rank_class
 
 db = SQLAlchemy()
 redis_store = None  # type: StrictRedis
@@ -40,6 +41,8 @@ def create_app(config_name):
                               decode_responses=True)
     # 4csrf包含请求体都需要csrf,保护
     CSRFProtect(app)
+    # 添加自定义过滤器
+    app.add_template_filter(set_rank_class, "set_rank_class")
 
     # 借助钩子函数请求完毕页面显示的时候就在cookie中设置csrf_token
     @app.after_request

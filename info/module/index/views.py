@@ -1,4 +1,5 @@
-from info.models import User
+from info import constants
+from info.models import User, News
 from info.utils.response_code import RET
 from . import index_bp
 # from info import redis_store
@@ -29,8 +30,21 @@ def index():
         except Exception as e:
             current_app.logger.error(e)
             return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    # -----------------新闻点击排行对象------------------
+    try:
+        news_rank_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="新闻查询错误")
+    # 将新闻对象列表转换成新闻字典列表
+    news_dict_list = []
+    for news_obj in news_rank_list if news_rank_list else []:
+        news_dict = news_obj.to_dict()
+        news_dict_list.append(news_dict)
+
     data = {
         "user_info": user.to_dict() if user else None,
+        "news_rank_list": news_dict_list,
     }
 
     return render_template("news/index.html", data=data)
