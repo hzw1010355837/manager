@@ -113,9 +113,32 @@ $(function () {
             $("#login-password-err").show();
             return;
         }
+        var params ={
+            "mobile":mobile,
+            "password":password
+        }
 
         // 发起登录请求
+        $.ajax({
+            url:"/passport/login",
+            type:"post",
+            data:JSON.stringify(params),
+            dataType:"json",
+            contentType:"application/json",
+            headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
+            success:function (resp) {
+                if(resp.errno=="0"){window.location.reload()}
+                else{
+                    // 错误展示
+                    $("#register-password-err").html(resp.errmsg)
+                    $("#register-password-err").show()
+                }
+            }
+        })
     })
+
 
 
     // TODO 注册按钮点击

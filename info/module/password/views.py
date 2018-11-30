@@ -221,5 +221,20 @@ def login():
     if not user:
         return jsonify(errno=RET.NODATA, errmsg="用户不存在")
     # 3,逻辑处理:密码处理
-    if not user.check_passowrd(password):
+    if not user.check_password(password):
         return jsonify(errno=RET.PWDERR, errmsg="密码错误")
+    # 4,记录用户登陆信息,修改最后一次登陆时间(redis)
+    session["user_id"] = user.id
+    session["nick_name"] = user.nick_name
+    session["mobile"] = user.mobile
+
+    # 5将mysql数据库中的时间修改
+    user.last_login = datetime.now()
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="保存数据用户异常")
+
+    return jsonify(errno=RET.OK, errmsg="登陆成功")
