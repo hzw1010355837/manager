@@ -21,6 +21,7 @@ def index():
     # 添加模板
 
     user_id = session.get("user_id")
+    user = None
     # -----------------查询用户对象------------------
     if user_id:
         try:
@@ -29,7 +30,7 @@ def index():
             current_app.logger.error(e)
             return jsonify(errno=RET.DBERR, errmsg="查询错误")
     data = {
-        "user_info": user.to_dict() if user else None
+        "user_info": user.to_dict() if user else None,
     }
 
     return render_template("news/index.html", data=data)
