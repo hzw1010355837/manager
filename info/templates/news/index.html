@@ -16,7 +16,7 @@
             <ul class="menu fl">
                 <ul class="menu fl">
                     {% for category in data.categories %}
-                     <li class="{% if loop.index0 == 0 %}active{% else %}{% endif %}" data-cid="{{ loop.index0 }}"><a href="javascript:;">{{ category.name }}</a></li>
+                     <li class="{% if loop.index0 == 0 %}active{% else %}{% endif %}" data-cid="{{ loop.index }}"><a href="javascript:;">{{ category.name }}</a></li>
                     {% endfor %}
                 </ul>
             </ul>

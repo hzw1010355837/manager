@@ -3,7 +3,7 @@ from info.models import User, News, Category
 from info.utils.response_code import RET
 from . import index_bp
 # from info import redis_store
-from flask import render_template, current_app, session, jsonify
+from flask import render_template, current_app, session, jsonify, request
 
 # import logging
 
@@ -67,3 +67,44 @@ def index():
 @index_bp.route('/favicon.ico')
 def favicon():
     return current_app.send_static_file('news/favicon.ico')
+
+
+@index_bp.route("/news_list")
+def news_list():
+    params = request.args
+    cid = params.get("cid")
+    page = params.get("page", 1)
+    per_page = params.get("per_page", 10)
+    if not cid:
+        current_app.logger.error("参数不足")
+        return jsonify(errno=RET.NODATA, errmsg="参数不足")
+    try:
+        cid = int(cid)
+        page = int(page)
+        per_page = int(per_page)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    filter_list = []
+    if cid != 1:
+        filter_list.append(News.category_id == cid)
+    try:
+        paginate = News.query.filter(*filter_list).order_by(News.create_time.desc()).paginate(page, per_page, False)
+        news_list = paginate.items
+        # print(news_list)
+        current_page = paginate.page
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    # 新闻对象列表转新闻字典列表
+    news_dict_list = []
+    for news in news_list if news_list else []:
+        news_dict_list.append(news.to_dict())
+    data = {
+        "newsList": news_dict_list,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    print(news_dict_list)
+    return jsonify(errno=RET.OK, errmsg="新闻查询成功", data=data)
