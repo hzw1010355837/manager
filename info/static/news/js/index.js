@@ -42,6 +42,15 @@ $(function () {
 
         if ((canScrollHeight - nowScroll) < 100) {
             // TODO 判断页数，去更新新闻数据
+            if(data_querying){
+                if(cur_page <= total_page){
+                    updateNewsData()
+                    data_querying = false
+                }else {
+                    data_querying = true
+                }
+            }
+
         }
     })
 })
@@ -53,10 +62,14 @@ function updateNewsData() {
         "page": cur_page,
         "total_page": total_page
     }
+
     $.get("/news_list",params,function (resp) {
         if (resp) {
             // 先清空原有数据
             if(cur_page == 1){$(".list_con").html('')}
+            data_querying = true
+            cur_page += 1
+            total_page = resp.data.total_page
 
             // 显示数据
             for (var i = 0; i < resp.data.newsList.length; i++) {

@@ -91,7 +91,6 @@ def news_list():
     try:
         paginate = News.query.filter(*filter_list).order_by(News.create_time.desc()).paginate(page, per_page, False)
         news_list = paginate.items
-        # print(news_list)
         current_page = paginate.page
         total_page = paginate.pages
     except Exception as e:
@@ -106,5 +105,4 @@ def news_list():
         "current_page": current_page,
         "total_page": total_page
     }
-    print(news_dict_list)
     return jsonify(errno=RET.OK, errmsg="新闻查询成功", data=data)
