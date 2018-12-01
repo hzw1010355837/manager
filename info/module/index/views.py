@@ -1,5 +1,5 @@
 from info import constants
-from info.models import User, News
+from info.models import User, News, Category
 from info.utils.response_code import RET
 from . import index_bp
 # from info import redis_store
@@ -41,10 +41,24 @@ def index():
     for news_obj in news_rank_list if news_rank_list else []:
         news_dict = news_obj.to_dict()
         news_dict_list.append(news_dict)
+    # ----------------查询新闻分类数据 ------------------------
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询分类数据异常")
+
+    # 分类对象列表转换成字典列表
+    categories_dict_list = []
+    for category in categories if categories else []:
+        # 分类对象转出成字典
+        category_dict = category.to_dict()
+        categories_dict_list.append(category_dict)
 
     data = {
         "user_info": user.to_dict() if user else None,
         "news_rank_list": news_dict_list,
+        "categories": categories_dict_list
     }
 
     return render_template("news/index.html", data=data)
