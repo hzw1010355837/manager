@@ -327,18 +327,3 @@ function generateUUID() {
     });
     return uuid;
 }
-
-function login_out() {
-    $.ajax({
-            url:"/passport/login_out",
-            type:"post",
-            dataType:"json",
-            headers: {
-                    "X-CSRFToken": getCookie("csrf_token")
-            },
-            success:function (resp) {
-                if(resp.errno=="0"){window.location.reload()}
-            }
-        })
-
-}
