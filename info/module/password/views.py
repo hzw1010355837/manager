@@ -43,7 +43,7 @@ def get_image_code():
 
 
 @passport_bp.route("/sms_code", methods=["POST"])
-def send_smscode():
+def send_sms_code():
     """
     1获取参数
         获取三个参数:image_code_id,mobile,image_code
@@ -238,3 +238,11 @@ def login():
         return jsonify(errno=RET.DBERR, errmsg="保存数据用户异常")
 
     return jsonify(errno=RET.OK, errmsg="登陆成功")
+
+
+@passport_bp.route("/login_out",methods=["POST"])
+def login_out():
+    session.pop("user_id")
+    session.pop("mobile")
+    session.pop("nick_name")
+    return jsonify(errno=RET.OK, errmsg="退出成功")
