@@ -1,5 +1,6 @@
 from flask import session, current_app, jsonify, g
 from info.utils.response_code import RET
+import functools
 
 
 def set_rank_class(index):
@@ -14,6 +15,7 @@ def set_rank_class(index):
 
 
 def user_login_data(view_func):
+    @functools.wraps(view_func)
     def wrapper(*args, **kwargs):
         user_id = session.get("user_id")
         user = None

@@ -1,5 +1,5 @@
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, render_template, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import generate_csrf
@@ -7,7 +7,7 @@ from redis import StrictRedis
 from config import config_dict
 from flask_session import Session
 import logging
-from info.utils.common import set_rank_class
+from info.utils.common import set_rank_class, user_login_data
 
 db = SQLAlchemy()
 redis_store = None  # type: StrictRedis
@@ -69,5 +69,12 @@ def create_app(config_name):
     # 注册新闻详情蓝图
     from info.module.news import news_detail_bp
     app.register_blueprint(news_detail_bp)
+
+    @app.errorhandler(404)
+    @user_login_data
+    def handler(e):
+        user = g.user
+        data = {"user_info": user.to_dict() if user else None}
+        return render_template("news/404.html", data=data)
 
     return app
