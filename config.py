@@ -19,11 +19,12 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
-    # DEBUG = True
+    DEBUG = True
     LOG_LEVEL = logging.DEBUG
 
 
 class ProductionConfig(Config):
+    DEBUG = False
     LOG_LEVEL = logging.ERROR
 
 
