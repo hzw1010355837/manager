@@ -54,7 +54,7 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询错误")
-    news_dict = []
+    news_dict = None
     if news:
         news_dict = news.to_dict()
     # ----------------查询新闻是否收藏 ------------------------
