@@ -1,5 +1,4 @@
 from flask import current_app, jsonify, render_template, session, g
-
 from info import constants
 from info.models import News, User, Category
 from info.utils.common import user_login_data
@@ -37,21 +36,36 @@ def news_detail(news_id):
         news_dict = news_obj.to_dict()
         news_dict_list.append(news_dict)
     # ----------------查询新闻分类数据 ------------------------
+    # try:
+    #     categories = Category.query.all()
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #     return jsonify(errno=RET.DBERR, errmsg="查询分类数据异常")
+    #
+    # # 分类对象列表转换成字典列表
+    # categories_dict_list = []
+    # for category in categories if categories else []:
+    #     # 分类对象转出成字典
+    #     category_dict = category.to_dict()
+    #     categories_dict_list.append(category_dict)
+    # ----------------新闻内容展示 ------------------------
     try:
-        categories = Category.query.all()
+        news = News.query.get(news_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="查询分类数据异常")
-
-    # 分类对象列表转换成字典列表
-    categories_dict_list = []
-    for category in categories if categories else []:
-        # 分类对象转出成字典
-        category_dict = category.to_dict()
-        categories_dict_list.append(category_dict)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    news_dict = []
+    if news:
+        news_dict = news.to_dict()
+    # ----------------查询新闻是否收藏 ------------------------
+    is_collected = False
+    if news in user.collection_news:
+        is_collected = True
     data = {
         "user_info": user,
         "news_rank_list": news_rank_list,
-        "categories_dict_list": categories_dict_list
+        "news": news_dict,
+        "is_collected": is_collected
+
     }
     return render_template("news/detail.html", data=data)
