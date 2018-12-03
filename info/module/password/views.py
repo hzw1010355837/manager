@@ -240,7 +240,7 @@ def login():
     return jsonify(errno=RET.OK, errmsg="登陆成功")
 
 
-@passport_bp.route("/login_out",methods=["POST"])
+@passport_bp.route("/login_out", methods=["POST"])
 def login_out():
     session.pop("user_id")
     session.pop("mobile")

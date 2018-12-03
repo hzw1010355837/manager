@@ -59,8 +59,9 @@ def news_detail(news_id):
         news_dict = news.to_dict()
     # ----------------查询新闻是否收藏 ------------------------
     is_collected = False
-    if news in user.collection_news:
-        is_collected = True
+    if user:
+        if news in user.collection_news:
+            is_collected = True
     data = {
         "user_info": user,
         "news_rank_list": news_rank_list,
