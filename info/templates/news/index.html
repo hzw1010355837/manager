@@ -2,21 +2,24 @@
 
 {% block titleBlock %}首页-新经资讯{% endblock %}
 
-{% block scriptBlock %}<script type="text/javascript" src="../../static/news/js/index.js"></script>{% endblock %}
+{% block scriptBlock %}
+    <script type="text/javascript" src="../../static/news/js/index.js"></script>{% endblock %}
 
 {% block categoryBlock %}
-     <ul class="menu fl">
+    <ul class="menu fl">
         <ul class="menu fl">
             {% for category in data.categories %}
-                <li class="{% if loop.index0 == 0 %}active{% else %}{% endif %}" data-cid="{{ loop.index }}"><a href="javascript:;">{{ category.name }}</a></li>
-{#                <li class="[{% loop.index  %}== 0?active:]" data-cid="{{ loop.index }}"><a href="javascript:;">{{ category.name }}</a></li>#}
+                <li class="{% if loop.index0 == 0 %}active{% else %}{% endif %}" data-cid="{{ loop.index }}"><a
+                        href="javascript:;">{{ category.name }}</a></li>
+                {#  <li class="[{% loop.index  %}== 0?active:]" data-cid="{{ loop.index }}"><a href="javascript:;">{{ category.name }}</a></li>#}
 
             {% endfor %}
         </ul>
-     </ul>
+    </ul>
 {% endblock %}
 
-{% block contentBlock %}<ul class="list_con fl"></ul>{% endblock %}
+{% block contentBlock %}
+    <ul class="list_con fl"></ul>{% endblock %}
 
 {#<!DOCTYPE html>#}
 {#<html lang="en">#}
@@ -53,7 +56,7 @@
 {#    #}
 {#    <div class="conter_con">#}
 {#        <ul class="list_con fl">#}
-            {#<li>
+{#<li>
                 <a href="#" class="news_pic fl"><img src="../../static/news/images/news_pic.jpg"></a>
                 <a href="#" class="news_title fl">日本史上最大IPO之一要来了：软银计划将手机业务分拆上市软银计划将手机业务分拆上市</a>
                 <a href="#" class="news_detail fl">据日经新闻网，软银计划让旗下核心业务移动手机部门SoftBank Corp.分拆上市，或募资2万亿日元(约180亿美元)。随着软银逐步向投资公司转型，此举旨在给手机业务部门更多自主权。</a>
@@ -105,7 +108,7 @@
 {#                <h3>点击排行</h3>#}
 {#            </div>#}
 {#            <ul class="rank_list">#}
-                {#<li><span class="first">1</span><a href="#">势如破竹！人民币再度连闯四道关口 在岸、离岸双双升破6.42</a></li>
+{#<li><span class="first">1</span><a href="#">势如破竹！人民币再度连闯四道关口 在岸、离岸双双升破6.42</a></li>
                 <li><span class="second">2</span><a href="#">凛冬已至，还有多少银行人在假装干银行</a></li>
                 <li><span class="third">3</span><a href="#">人民日报：部分城市楼市放松限制引关注，楼市调控不会“拉抽屉”</a></li>
                 <li><span>4</span><a href="#">势如破竹！人民币再度连闯四道关口 在岸、离岸双双升破6.42</a></li>

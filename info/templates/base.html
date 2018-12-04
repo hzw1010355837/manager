@@ -30,7 +30,7 @@
             {% if data.user_info %}
                 <div class="user_login fr">
                     <img src="{% if data.user_info.avatar_url %}{{ data.user_info.avatar_url }}{% else %}../../static/news/images/person01.png{% endif %}" class="lgin_pic">
-                    <a href="{{ url_for("profile.user_info") }}">{{ data.user_info.nick_name }}</a>
+                    <a href="{{ url_for("user.user_info") }}" id="nick_name">{{ data.user_info.nick_name }}</a>
                     <a href="#" onclick="login_out()">退出</a>
                 </div>
             {% else %}
