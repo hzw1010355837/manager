@@ -230,7 +230,7 @@ def set_news_comment():
 @news_detail_bp.route("/comment_like", methods=["POST"])
 @user_login_data
 def set_comment_like():
-    # 1,获取参数   comment_id, (news_id, user)分析错误, action(是否点赞了)
+    # 1,获取参数   comment_id, (news_id)分析错误 user, action(是否点赞了)
     """
     为什么不加user,这样看不到是谁点赞
     :return:
@@ -257,6 +257,8 @@ def set_comment_like():
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if not comment:
+        return jsonify(errno=RET.NODATA, errmsg="评论不存在")
     try:
         comment_like = CommentLike.query.filter(CommentLike.comment_id == comment_id,
                                                 CommentLike.user_id == user.id).first()

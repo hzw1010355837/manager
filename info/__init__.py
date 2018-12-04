@@ -70,6 +70,10 @@ def create_app(config_name):
     from info.module.news import news_detail_bp
     app.register_blueprint(news_detail_bp)
 
+    # 注册用户个人中心蓝图
+    from info.module.profile import profile_bp
+    app.register_blueprint(profile_bp)
+
     @app.errorhandler(404)
     @user_login_data
     def handler(e):
