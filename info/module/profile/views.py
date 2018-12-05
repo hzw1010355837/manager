@@ -227,3 +227,41 @@ def user_news_release():
             return jsonify(errno=RET.DBERR, errmsg="查询错误")
 
         return jsonify(errno=RET.OK, errmsg="发布成功")
+
+
+# 新闻列表
+@profile_bp.route("/user_news_list")
+@user_login_data
+def user_news_list():
+    user = g.user
+    p = request.args.get("p", 1)
+    # p 必须转整型
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="页数错误")
+    if not user:
+        current_app.logger.error("用户未登录")
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+    try:
+        # 查询当前用户的文章
+        paginate = News.query.filter(News.status != 0, News.user_id == user.id).paginate(p,
+                                                                                         constants.USER_COLLECTION_MAX_NEWS,
+                                                                                         False)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    news_obj_list = paginate.items
+    current_page = paginate.page
+    total_page = paginate.pages
+    news_dict_list = []
+    for news in news_obj_list if news_obj_list else []:
+        news_dict_list.append(news.to_review_dict())
+    data = {
+        "user_info": user.to_dict(),
+        "news_list": news_dict_list,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    return render_template("profile/user_news_list.html", data=data)
