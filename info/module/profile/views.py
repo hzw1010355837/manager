@@ -24,12 +24,9 @@ def user_info():
 def base_info():
     # 1,获取参数 user,
     user = g.user
-    if not user:
-        current_app.logger.error("用户未登录")
-        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
     if request.method == "GET":
         data = {
-            "user_info": user.to_dict()
+            "user_info": user.to_dict() if user else []
         }
         return render_template("profile/user_base_info.html", data=data)
     # 2,校验参数
@@ -45,6 +42,9 @@ def base_info():
         if gender not in ["MAN", "WOMAN"]:
             current_app.logger.error("性别错误")
             return jsonify(errno=RET.PARAMERR, errmsg="性别错误")
+        if not user:
+            current_app.logger.error("用户未登录")
+            return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
         user_list = User.query.filter(User.nick_name == nick_name).all()
         # 3,逻辑处理
         if user_list:

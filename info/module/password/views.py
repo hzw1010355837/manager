@@ -242,7 +242,9 @@ def login():
 
 @passport_bp.route("/login_out", methods=["POST"])
 def login_out():
-    session.pop("user_id")
-    session.pop("mobile")
-    session.pop("nick_name")
+    # 防止报错,None
+    session.pop("user_id", None)
+    session.pop("mobile", None)
+    session.pop("nick_name", None)
+    session.pop("is_admin", None)
     return jsonify(errno=RET.OK, errmsg="退出成功")
