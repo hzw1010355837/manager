@@ -1,5 +1,5 @@
 from info import db, constants
-from info.models import User
+from info.models import User, News, Category
 from info.utils.pic_storage import pic_storage
 from info.utils.response_code import RET
 from . import profile_bp
@@ -87,7 +87,7 @@ def user_pic_info():
             current_app.logger.error(e)
             return jsonify(errno=RET.THIRDERR, errmsg="七牛云错误")
         # 3,逻辑处理
-        user.avatar_url = constants.QINIU_DOMIN_PREFIX + pic_name
+        user.avatar_url = pic_name
         try:
             db.session.commit()
         except Exception as e:
@@ -168,3 +168,62 @@ def user_collection():
         "total_page": total_page
     }
     return render_template("profile/user_collection.html", data=data)
+
+
+# 发布新闻
+@profile_bp.route("/user_news_release", methods=["GET", "POST"])
+@user_login_data
+def user_news_release():
+    user = g.user
+    if request.method == "GET":
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.DBERR, errmsg="查询错误")
+        category_dict_list = []
+        for category in categories if categories else []:
+            category_dict_list.append(category.to_dict())
+        category_dict_list.pop(0)
+
+        data = {
+            # "user_info": user.to_dict() if user else None,
+            "categories": category_dict_list
+        }
+        return render_template("profile/user_news_release.html", data=data)
+    else:
+        param = request.form
+        index_image = request.files.get("index_image")
+        title = param.get("title")
+        cid = param.get("category_id")
+        digest = param.get("digest")
+        content = param.get("content")
+        source = "个人发布"
+        if not all([user, title, cid, digest, content, index_image]):
+            current_app.logger.error("参数错误")
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+        index_data = index_image.read()
+        try:
+            index_name = pic_storage(index_data)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.DBERR, errmsg="查询错误")
+
+        news = News()
+        news.user_id = user.id
+        news.title = title
+        news.source = source
+        news.content = content
+        news.digest = digest
+        news.category_id = cid
+        news.status = 1
+        news.index_image_url = constants.QINIU_DOMIN_PREFIX + index_name
+        try:
+            db.session.add(news)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=RET.DBERR, errmsg="查询错误")
+
+        return jsonify(errno=RET.OK, errmsg="发布成功")

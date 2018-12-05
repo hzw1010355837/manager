@@ -66,7 +66,7 @@ def news_list():
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询错误")
-    filter_list = []
+    filter_list = [News.status == 0]
     if cid != 1:
         filter_list.append(News.category_id == cid)
     try:

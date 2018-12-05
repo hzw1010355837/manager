@@ -1,18 +1,61 @@
+# import qiniu
+#
+# access_key = "hPZDiDGgMxgXuhes1gtvID1JKx_COF9PpI8GdqWF"
+# secret_key = "8ypQcQ7pnmp6FYSQ5coDC0FkXeX0Q27k8FVchFUN"
+# bucket_name = "information"
+#
+#
+# # TODO 没带身份证下午做
+# def pic_storage(data):
+#     q = qiniu.Auth(access_key, secret_key)
+#     # key = 'hello'
+#     # data = 'hello qiniu!'
+#     token = q.upload_token(bucket_name)
+#     ret, info = qiniu.put_data(token, None, data)
+#     if ret is not None:
+#         print('All is OK')
+#     else:
+#         print(info)  # error message in info
 import qiniu
+from flask import current_app
 
-access_key = "hPZDiDGgMxgXuhes1gtvID1JKx_COF9PpI8GdqWF"
-secret_key = "8ypQcQ7pnmp6FYSQ5coDC0FkXeX0Q27k8FVchFUN"
+access_key = "W0oGRaBkAhrcppAbz6Nc8-q5EcXfL5vLRashY4SI"
+secret_key = "tsYCBckepW4CqW0uHb9RdfDMXRDOTEpYecJAMItL"
 bucket_name = "information"
 
 
-# TODO 没带身份证下午做
 def pic_storage(data):
+    """将图片二进制数据上传到七牛云"""
+    # 用户权限鉴定
     q = qiniu.Auth(access_key, secret_key)
+    # 图片名称 ，如果不指明七牛云会自动生成一个随机的唯一的图片名称
     # key = 'hello'
-    # data = 'hello qiniu!'
     token = q.upload_token(bucket_name)
-    ret, info = qiniu.put_data(token, None, data)
-    if ret is not None:
-        print('All is OK')
-    else:
-        print(info)  # error message in info
+
+    if not data:
+        return AttributeError("图片数据为空")
+
+    try:
+        # 将二进制图片数据上传到七牛云（网络请求有可能失败）
+        ret, info = qiniu.put_data(token, None, data)
+    except Exception as e:
+        current_app.logger.error(e)
+        raise e
+
+    print(ret)
+    print("---------")
+    print(info)
+    # 工具类如果产生异常千万别私自处理，应该抛出，方便调用者查询异常所在。
+    if info.status_code != 200:
+        raise Exception("图片上传到七牛云失败")
+
+    # 返回图片名称
+    return ret["key"]
+
+
+if __name__ == '__main__':
+    file = input("请输入图片地址：")
+    with open(file, "rb") as f:
+        # 读取到图片二进制数据
+        data = f.read()
+        pic_storage(data)
