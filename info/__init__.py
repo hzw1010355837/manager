@@ -74,6 +74,10 @@ def create_app(config_name):
     from info.module.profile import profile_bp
     app.register_blueprint(profile_bp)
 
+    # 注册管理员蓝图
+    from info.module.admin import admin_bp
+    app.register_blueprint(admin_bp)
+
     @app.errorhandler(404)
     @user_login_data
     def handler(e):
