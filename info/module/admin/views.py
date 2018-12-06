@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from flask import request, render_template, jsonify, current_app, redirect, url_for, session
+from flask import request, render_template, jsonify, current_app, redirect, url_for, session, abort
 import time
-from info import constants
+from info import constants, db
 from info.models import User, News
 from info.utils.response_code import RET
 from . import admin_bp
@@ -240,19 +240,53 @@ def news_review():
 
 
 # 新闻详情
-@admin_bp.route("/news_review_detail")
+@admin_bp.route("/news_review_detail", methods=["POST", "GET"])
 def news_review_detail():
-    pass
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if request.method == "GET":
+        news_id = request.args.get("news_id")
+        news = None
+        try:
+            # news = News.query.filter(News.id == news_id).first()
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        news_dict = None
+        if news:
+            news_dict = news.to_dict()
+        data = {
+            "news": news_dict
+        }
+        return render_template("admin/news_review_detail.html", data=data)
+    else:
+        param = request.json
+        action = param.get("action")
+        news_id = param.get("news_id")
+        news = []
+        # 2.1 非空判断
+        if not all([news_id, action]):
+            return jsonify(errno=RET.PARAMERR, errmsg="参数不足")
+        # 2.2 action in ["accept", "reject"]
+        if action not in ["accept", "reject"]:
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        if not news:
+            current_app.logger.error("新闻对象不存在")
+            abort(404)
+        if action == "reject":
+            reason = param.get("reason")
+            news.reason = reason
+            news.status = -1
+        else:
+            news.status = 0
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg="提交错误")
+        return jsonify(errno=RET.OK, errmsg="OK")
