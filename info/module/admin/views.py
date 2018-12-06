@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta, time
-
+from datetime import datetime, timedelta
 from flask import request, render_template, jsonify, current_app, redirect, url_for, session
-from info.models import User
+import time
+from info import constants
+from info.models import User, News
 from info.utils.response_code import RET
 from . import admin_bp
 
 
+# 登陆
 @admin_bp.route("/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "GET":
@@ -42,11 +44,13 @@ def admin_login():
         return redirect(url_for("admin.admin_index"))
 
 
+# 首页
 @admin_bp.route("/index", methods=['POST', "GET"])
 def admin_index():
     return render_template("admin/index.html")
 
 
+# 用户统计
 @admin_bp.route("/user_count")
 def user_count():
     """返回用户统计信息"""
@@ -143,3 +147,42 @@ def user_count():
 
     return render_template('admin/user_count.html', data=data)
 
+
+# 用户列表
+@admin_bp.route("/user_list")
+def user_list():
+    # 1,获取参数
+    p = request.args.get("p", 1)
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    # 2,校验参数
+    user_list = []
+    current_page = 1
+    total_page = 1
+    try:
+        paginate = User.query.filter(User.is_admin == False).order_by(User.last_login.desc()).paginate(p,
+                                                                                                        constants.ADMIN_USER_PAGE_MAX_COUNT,
+                                                                                                        False)
+        user_list = paginate.items
+        current_page = paginate.page
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 3,逻辑处理
+    user_dict_list = []
+    for user in user_list:
+        user_dict_list.append(user.to_admin_dict())
+    data = {
+        "users": user_dict_list,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    # 4,返回值
+    return render_template("admin/user_list.html", data=data)
+
+
+# 新闻管理
