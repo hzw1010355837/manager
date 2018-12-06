@@ -7,10 +7,11 @@ from .views import *
 
 @admin_bp.before_request
 def is_admin_user():
+    print(request.url)
     if request.url.endswith("/admin/login"):
         pass
     else:
         user_id = session.get("user_id")
         is_admin = session.get("is_admin", False)
-        if not user_id or not is_admin == False:
+        if not user_id or is_admin == False:
             return redirect("/")

@@ -2,10 +2,9 @@ from flask import current_app, jsonify
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from info import create_app, db, models
+from info.models import User
 
 # 1 创建app对象
-from info.models import User
-from info.utils.response_code import RET
 
 app = create_app("development")
 # 6migrate数据库迁移
