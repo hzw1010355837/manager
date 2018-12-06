@@ -290,3 +290,46 @@ def news_review_detail():
             current_app.logger.error(e)
             return jsonify(errno=RET.PARAMERR, errmsg="提交错误")
         return jsonify(errno=RET.OK, errmsg="OK")
+
+
+# 新闻版式
+@admin_bp.route("/news_edit")
+def news_edit():
+    p = request.args.get("p", 1)
+    keywords = request.args.get("keywords")
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        p = 1
+    news_list = None
+    filter_list = []
+    current_page = 1
+    total_page = 1
+    if keywords:
+        filter_list.append(News.title.contains(keywords))
+    try:
+        paginate = News.query.filter(*filter_list).order_by(News.create_time.desc()).paginate(p, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        news_list = paginate.items
+        current_page = paginate.page
+        total_page = paginate.pages
+
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+    if not news_list:
+        abort(404)
+    news_dict = []
+    for news in news_list:
+        news_dict.append(news.to_basic_dict())
+    data = {
+        "news_list": news_dict,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    return render_template("admin/news_edit.html", data=data)
+
+
+@admin_bp.route("/news_edit_detail")
+def news_edit_detail():
+    render_template("admin/news_edit_detail.html")
