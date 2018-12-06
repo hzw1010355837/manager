@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from flask import request, render_template, jsonify, current_app, redirect, url_for, session, abort
 import time
 from info import constants, db
-from info.models import User, News
+from info.models import User, News, Category
+from info.utils.captcha.captcha import captcha
 from info.utils.response_code import RET
 from . import admin_bp
 
@@ -309,7 +310,9 @@ def news_edit():
     if keywords:
         filter_list.append(News.title.contains(keywords))
     try:
-        paginate = News.query.filter(*filter_list).order_by(News.create_time.desc()).paginate(p, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        paginate = News.query.filter(*filter_list).order_by(News.create_time.desc()).paginate(p,
+                                                                                              constants.ADMIN_NEWS_PAGE_MAX_COUNT,
+                                                                                              False)
         news_list = paginate.items
         current_page = paginate.page
         total_page = paginate.pages
@@ -330,6 +333,65 @@ def news_edit():
     return render_template("admin/news_edit.html", data=data)
 
 
-@admin_bp.route("/news_edit_detail")
+@admin_bp.route("/news_edit_detail", methods=["GET", "POST"])
 def news_edit_detail():
-    render_template("admin/news_edit_detail.html")
+    if request.method == "GET":
+        news_id = request.args.get("news_id")
+        if not news_id:
+            current_app.logger.error("参数错误")
+            abort(404)
+        news = None
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.DBERR, errmsg="查询错误")
+        categories_dict = []
+        for category in categories if categories else []:
+            categories_dict.append(category.to_dict())
+        categories_dict.pop(0)
+        data = {
+            "news": news.to_dict(),
+            "categories": categories_dict
+        }
+
+        return render_template("admin/news_edit_detail.html", data=data)
+
+    # 因为前段使用ajaxSubmit所有数据是form表单提交的
+    param_dict = request.form
+    #  1.1 news_id:新闻id， title：新闻标题，category_id:新闻分类id
+    #  digest:新闻摘要，index_image:新闻主图片（非必传），content：新闻内容
+    news_id = param_dict.get("news_id")
+    title = param_dict.get("title")
+    category_id = param_dict.get("category_id")
+    digest = param_dict.get("digest")
+    content = param_dict.get("content")
+    index_image_url = request.files.get("index_image_url")
+
+    if not all([news_id, title, digest, content, category_id]):
+        return jsonify(errno=RET.NODATA, errmsg="参数不足")
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if not news:
+        abort(404)
+    news.title = title
+    news.digest = digest
+    news.content = content
+    news.category_id = category_id
+    if index_image_url:
+        pic_name = captcha(index_image_url.read())
+        news.index_image_url = constants.QINIU_DOMIN_PREFIX + pic_name
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="保存数据库异常")
+    return jsonify(errno=RET.OK, errmsg="OK")
