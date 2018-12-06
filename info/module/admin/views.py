@@ -164,8 +164,8 @@ def user_list():
     total_page = 1
     try:
         paginate = User.query.filter(User.is_admin == False).order_by(User.last_login.desc()).paginate(p,
-                                                                                                        constants.ADMIN_USER_PAGE_MAX_COUNT,
-                                                                                                        False)
+                                                                                                       constants.ADMIN_USER_PAGE_MAX_COUNT,
+                                                                                                       False)
         user_list = paginate.items
         current_page = paginate.page
         total_page = paginate.pages
@@ -186,3 +186,73 @@ def user_list():
 
 
 # 新闻管理
+@admin_bp.route("/news_review")
+def news_review():
+    p = request.args.get("p", 1)
+    keywords = request.args.get("keywords")
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    news_obj_list = []
+    current_page = 1
+    total_page = 1
+    if keywords:
+        try:
+            filter_list = [News.title.contains(keywords)]
+            paginate = News.query.filter(*filter_list).paginate(p, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+            news_obj_list = paginate.items
+            current_page = paginate.page
+            total_page = paginate.pages
+        except Exception as e:
+            current_app.logger.error(e)
+        news_dict_list = []
+        for news in news_obj_list:
+            news_dict_list.append(news.to_review_dict())
+        data = {
+            "news_list": news_dict_list,
+            "current_page": current_page,
+            "total_page": total_page
+        }
+        return render_template("admin/news_review.html", data=data)
+    else:
+        try:
+            paginate = News.query.filter(News.status != 0).order_by(News.create_time.desc()).paginate(p,
+                                                                                                      constants.ADMIN_NEWS_PAGE_MAX_COUNT,
+                                                                                                      False)
+
+            news_obj_list = paginate.items
+            current_page = paginate.page
+            total_page = paginate.pages
+        except Exception as e:
+            current_app.logger.error(e)
+        news_dict_list = []
+        for news in news_obj_list:
+            news_dict_list.append(news.to_review_dict())
+        data = {
+            "news_list": news_dict_list,
+            "current_page": current_page,
+            "total_page": total_page
+        }
+
+        return render_template("admin/news_review.html", data=data)
+
+
+# 新闻详情
+@admin_bp.route("/news_review_detail")
+def news_review_detail():
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
