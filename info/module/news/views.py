@@ -102,14 +102,25 @@ def news_detail(news_id):
         if comment_obj.id in commentlike_id_list:
             comment_dict["is_like"] = True
         comment_dict_list.append(comment_dict)
-
+    # ----------------关注实现 ------------------------
+    is_followed = False
+    # try:
+    #     author = User.query.filter(User.id == news.user_id).first()
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #     return jsonify(errno=RET.DBERR, errmsg="查询用户对象异常")
+    # if author in user.followed:
+    #     is_followed = True
+    if news.user_id in user.followed:
+        is_followed = True
     # 首页数据字典
     data = {
         "user_info": user.to_dict() if user else None,
         "news_rank_list": news_dict_list,
         "news": news_dict,
         "is_collected": is_collected,
-        "comments": comment_dict_list
+        "comments": comment_dict_list,
+        "is_followed": is_followed
     }
     return render_template("news/detail.html", data=data)
     # if user:

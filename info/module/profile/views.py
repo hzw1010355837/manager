@@ -265,3 +265,11 @@ def user_news_list():
         "total_page": total_page
     }
     return render_template("profile/user_news_list.html", data=data)
+
+
+# 用户关注列表
+@profile_bp.route("/user_follow", methods=["POST"])
+@user_login_data
+def user_follow():
+    user = g.user
+    pass
