@@ -104,15 +104,15 @@ def news_detail(news_id):
         comment_dict_list.append(comment_dict)
     # ----------------关注实现 ------------------------
     is_followed = False
-    # try:
-    #     author = User.query.filter(User.id == news.user_id).first()
-    # except Exception as e:
-    #     current_app.logger.error(e)
-    #     return jsonify(errno=RET.DBERR, errmsg="查询用户对象异常")
-    # if author in user.followed:
-    #     is_followed = True
-    if news.user_id in user.followed:
+    try:
+        author = User.query.filter(User.id == news.user_id).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询用户对象异常")
+    if author in user.followed:
         is_followed = True
+    # if news.user_id in user.followed:
+    #     is_followed = True
     # 首页数据字典
     data = {
         "user_info": user.to_dict() if user else None,
@@ -296,3 +296,44 @@ def set_comment_like():
 
     # 4,返回值
     return jsonify(errno=RET.OK, errmsg="点赞功能完成")
+
+
+@news_detail_bp.route("/followed_user", methods=["POST"])
+@user_login_data
+def followed_user():
+    user = g.user
+    param = request.json
+    action = param.get("action")
+    user_id = param.get("user_id")
+    if not all([user, action, user_id]):
+        current_app.logger.error("参数错误")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    if action not in ["follow", "unfollow"]:
+        current_app.logger.error("参数错误")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    try:
+        author = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    if not author:
+        current_app.logger.error("参数错误")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    # user.followers :当前用户的所有粉丝列表
+    # user.followed :当前用户的所有关注列表
+    if action == "follow":
+        if user in author.followers:
+            return jsonify(errno=RET.DATAEXIST, errmsg="已经重复关注")
+        else:
+            author.followers.append(user)
+    else:
+        if user in author.followers:
+            author.followers.remove(user)
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    return jsonify(errno=RET.OK, errmsg="OK")
