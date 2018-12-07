@@ -268,8 +268,35 @@ def user_news_list():
 
 
 # 用户关注列表
-@profile_bp.route("/user_follow", methods=["POST"])
+@profile_bp.route("/user_follow")
 @user_login_data
 def user_follow():
     user = g.user
-    pass
+    p = request.args.get("p", 1)
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        p = 1
+    user_list = []
+    current_page = 1
+    total_page = 1
+
+    try:
+        # paginate = User.query.filter(User.followers == user.followers).order_by()
+        paginate = user.followed.paginate(p, constants.USER_FOLLOWED_MAX_COUNT, False)
+        user_list = paginate.items
+        current_page = paginate.page
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询错误")
+    user_dict = []
+    for user in user_list:
+        user_dict.append(user.to_dict())
+    data = {
+        "users": user_dict,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    return render_template("profile/user_follow.html", data=data)
