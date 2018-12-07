@@ -98,3 +98,5 @@ def news_list():
         "total_page": total_page
     }
     return jsonify(errno=RET.OK, errmsg="新闻查询成功", data=data)
+
+

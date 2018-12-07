@@ -395,3 +395,46 @@ def news_edit_detail():
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="保存数据库异常")
     return jsonify(errno=RET.OK, errmsg="OK")
+
+
+@admin_bp.route("/news_type", methods=["GET", "POST"])
+def news_type():
+    if request.method == "GET":
+        categories = None
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        categories_dict = []
+        for category in categories if categories else []:
+            categories_dict.append(category.to_dict())
+        categories_dict.pop(0)
+        data = {
+            "categories": categories_dict
+        }
+        return render_template("admin/news_type.html", data=data)
+    param = request.json
+    action = param.get("action")
+    content = param.get("name")
+    if not content:
+        current_app.logger.error("参数错误")
+        abort(404)
+    if action not in ["add", "edit"]:
+        current_app.logger.error("参数错误")
+        abort(404)
+    if action == "add":
+        category = Category()
+        category.name = content
+        db.session.add(category)
+    else:
+        category_id = request.json.get("id")
+        category = Category.query.filter(Category.id == category_id).first()
+        category.name = content
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        abort(404)
+    return jsonify(errno=RET.OK, errmsg="OK")
