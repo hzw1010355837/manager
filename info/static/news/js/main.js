@@ -247,6 +247,9 @@ function sendSMSCode() {
         // 后端返回的数据也是json格式
         dataType: "json",
         // resp是js对象
+        headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
         success: function (resp) {
 
             if(resp.errno == "0"){

@@ -109,8 +109,9 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询用户对象异常")
-    if author in user.followed:
-        is_followed = True
+    if user and author:
+        if author in user.followed:
+            is_followed = True
     # if news.user_id in user.followed:
     #     is_followed = True
     # 首页数据字典
