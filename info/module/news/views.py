@@ -72,6 +72,7 @@ def news_detail(news_id):
     # for comment_obj in comment_obj_list:
 
     # ----------------是否点赞验证 ------------------------
+    commentlike_id_list = []
     if user:
         # ----------------6.查询当前登录用户具体对那几条评论点过赞 ------------------------
         # 1. 查询出当前新闻的所有评论，取得所有评论的id —>  list[1,2,3,4,5,6]
